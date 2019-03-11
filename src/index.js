@@ -18,7 +18,7 @@ function verificaAutenticacao(nextState,replace) {
     //matchPattern queremos comparar /timeline(/:login) contra o endereço que esta sendo acessado
     const resultado = matchPattern('/timeline(/:login)',nextState.location.pathname);//proximo estado
     //retorna dois paramNames: ["login"] paramValues: ["rafael"]
-    //http://..timeline/rafael se fosse só timeline seria paramValues: [undefined]
+    //http://..timeline/rafael se fosse só timelinegi seria paramValues: [undefined]
     const enderecoPrivadoTimeline = resultado.paramValues[0] === undefined;//se tiver undefined quer dizer que estamos no endereço privado, que recebe true
     console.log(resultado);
 
