@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import FotoItem from './FotoItem'
+import TimelineApi from '../logicas/TimelineApi'
+//transição animada
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 export default class Timeline extends Component {
     constructor(props) {
@@ -8,23 +11,28 @@ export default class Timeline extends Component {
         this.login = this.props.login;
     }
 
+    componentWillMount() {
+        //sempre que tiver mudanças na timeline, executa essa função
+        this.props.store.subscribe(() => {
+            this.setState({fotos:this.props.store.getState()});
+        })
+    }
+
     carregaFotos() {
-        //var consulta = fetch('https://developer.mozilla.org/pt-BR/docs/Web/API/Fetch_API')
-        //Vemos que consulta é um objeto do tipo Promise
-        //fetch(`https://instalura-api.herokuapp.com/api/public/fotos?X-AUTH-TOKEN=${localStorage.getItem('auth-token')}`)
+
         let urlPerfil = ''
         if (this.login === undefined) {//se não passou parametro
             urlPerfil = `https://instalura-api.herokuapp.com/api/fotos?X-AUTH-TOKEN=${localStorage.getItem('auth-token')}`;
         } else {
             urlPerfil = `https://instalura-api.herokuapp.com/api/public/fotos/${this.login}`;
         }
-
-        fetch(urlPerfil)
-            .then(response => response.json())//assim que a resposta estiver pronta, e retornamos o json
-            .then(fotos => {//passamos a fotos por parametro, setamos as fotos para o nosso STATE
-                this.setState({ fotos: fotos });
-            });
+        //ao invés de dispachar uma action normal com action e payload
+        //vamos despachar uma função que pode por exemplo retornar uma promisse, e o redux thunk vai conseguir lidar com isso
+        //ele vai receber a função como argumento, vai executa-la e depois vai executar o dispach
+        this.props.store.dispatch(TimelineApi.lista(urlPerfil))
+        //TimelineApi.lista(urlPerfil, this.props.store)
     }
+
     componentDidMount() {
         this.carregaFotos();
     }
@@ -39,12 +47,28 @@ export default class Timeline extends Component {
         }
     }
 
+    like(fotoId) {
+        this.props.store.dispatch(TimelineApi.like(fotoId))
+    }
+
+    comenta(fotoId, textoComentario) {
+        this.props.store.dispatch(TimelineApi.comenta(fotoId,textoComentario))
+    }
+
     render() {
+        console.log(this.state.fotos)
         return (
             <div className="fotos container">
-                {
-                    this.state.fotos.map(foto => <FotoItem foto={foto} />)
-                }
+                <TransitionGroup className="timeline">
+                    {this.state.fotos.map(foto => (
+                        <CSSTransition
+                            key={foto.id}
+                            timeout={500}
+                            classNames="fade">
+                            <FotoItem foto={foto} like={this.like.bind(this)} comenta={this.comenta.bind(this)} />
+                        </CSSTransition>
+                    ))}
+                </TransitionGroup >
             </div>
         )
     }
